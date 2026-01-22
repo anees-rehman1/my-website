@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
         - name: my-website
-          image: my-website:latest  # This will be updated by ArgoCD
+          image: shadow1234090/my-website:v1  # This will be updated by ArgoCD
           ports:
             - containerPort: 80
           resources:

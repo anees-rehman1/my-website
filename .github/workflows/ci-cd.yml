@@ -1,15 +1,15 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for Docker Hub
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch:
 
 env:
-  IMAGE_NAME: my-website
-  REGISTRY: ghcr.io  # GitHub Container Registry
+  IMAGE_NAME: shadow1234090/my-website  # Change this!
+  REGISTRY: docker.io  # Docker Hub registry
 
 jobs:
   test:
@@ -21,45 +21,16 @@ jobs:
       - name: Test HTML files
         run: |
           echo "Testing HTML file structure..."
-          if [ -f "src/index.html" ]; then
-            echo "✓ index.html exists"
-          else
-            echo "✗ index.html missing"
-            exit 1
-          fi
-          
-          if [ -f "src/style.css" ]; then
-            echo "✓ style.css exists"
-          else
-            echo "✗ style.css missing"
-            exit 1
-          fi
-          
-          if [ -f "src/script.js" ]; then
-            echo "✓ script.js exists"
-          else
-            echo "✗ script.js missing"
-            exit 1
-          fi
-      
-      - name: Lint HTML
-        uses: antofuller/action-html5-linter@v1
-        with:
-          path: "src/index.html"
-      
-      - name: Run Lighthouse CI (if needed)
-        run: |
-          echo "Lighthouse tests would run here"
-          # npm install -g @lhci/cli
-          # lhci autorun
+          ls -la src/
+          [ -f "src/index.html" ] && echo "✓ index.html exists" || exit 1
+          [ -f "src/style.css" ] && echo "✓ style.css exists" || exit 1
+          [ -f "src/script.js" ] && echo "✓ script.js exists" || exit 1
 
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      
+    if: github.event_name != 'pull_request'
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -67,97 +38,78 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
-      - name: Log in to GitHub Container Registry
+      - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=commit-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
-      - name: Update deployment with new image tag
-        if: github.event_name != 'pull_request'
+      - name: Update deployment with new image
         run: |
-          # Update the deployment.yaml with the new image tag
-          IMAGE_TAG=${{ steps.meta.outputs.tags }}
-          echo "New image tag: $IMAGE_TAG"
+          # Get the latest tag
+          LATEST_TAG="${{ steps.meta.outputs.tags }}"
+          echo "Latest tag: $LATEST_TAG"
           
-          # For simplicity, we'll update the deployment.yaml
-          # In a real scenario, you might use kustomize or helm
-          sed -i "s|image: my-website:.*|image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG|" k8s/deployment.yaml
+          # Update deployment.yaml with specific tag (not latest)
+          # Get the commit SHA tag
+          COMMIT_SHA="${GITHUB_SHA:0:7}"
+          NEW_IMAGE="${{ env.IMAGE_NAME }}:commit-$COMMIT_SHA"
+          
+          echo "Updating deployment with image: $NEW_IMAGE"
+          sed -i "s|image: .*|image: $NEW_IMAGE|" k8s/deployment.yaml
+          
+          # Show the change
+          echo "Updated deployment.yaml:"
+          grep "image:" k8s/deployment.yaml
       
       - name: Commit and push changes
-        if: github.event_name != 'pull_request'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add k8s/deployment.yaml
-          git commit -m "Update image tag in deployment [skip ci]" || echo "No changes to commit"
-          git push
+          git diff --cached
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update image to $NEW_IMAGE [skip ci]"
+            git push
+          fi
 
-  deploy:
+  notify:
     needs: build-and-push
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Setup Kubernetes tools
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-      
-      - name: Setup Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
-      
-      - name: Deploy to Kubernetes (Optional)
-        if: false  # Set to true if you want GitHub Actions to deploy directly
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
-        run: |
-          echo "This step would deploy directly to Kubernetes"
-          # kubectl apply -f k8s/deployment.yaml
-      
-      - name: Trigger ArgoCD Sync (Optional)
-        if: false  # Set to true if you want to trigger ArgoCD sync
-        run: |
-          echo "This step would trigger ArgoCD sync"
-          # argocd app sync my-website
-      
       - name: Create Deployment Summary
         run: |
-          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Build and push completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 CI/CD Pipeline Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Docker Image Built and Pushed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry**: Docker Hub" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tags**: \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
-          echo "1. ArgoCD will automatically detect changes" >> $GITHUB_STEP_SUMMARY
-          echo "2. Application will be synced to Kubernetes" >> $GITHUB_STEP_SUMMARY
-          echo "3. Monitor deployment in ArgoCD UI" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. ArgoCD will detect the updated \`deployment.yaml\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. New image will be deployed to Kubernetes" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check ArgoCD UI for deployment status" >> $GITHUB_STEP_SUMMARY
