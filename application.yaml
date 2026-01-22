@@ -2,18 +2,14 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: my-website
-  namespace: argocd  # ArgoCD should be installed in this namespace
+  namespace: argocd
 spec:
   project: default
   
   source:
-    repoURL: https://github.com/anees-rehman1/my-website.git
-    targetRevision: HEAD
+    repoURL: https://github.com/anees-rehman1/my-website.git  # Your repo
+    targetRevision: main  # Changed from HEAD to main
     path: k8s/
-    helm:
-      parameters:
-        - name: image.tag
-          value: latest
   
   destination:
     server: https://kubernetes.default.svc
@@ -35,14 +31,10 @@ spec:
         factor: 2
         maxDuration: 3m
   
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas
-  
   info:
     - name: description
-      value: "My Website Application"
+      value: "My Website deployed via ArgoCD"
     - name: maintainer
-      value: "Your Name"
+      value: "Anees"
+    - name: repo
+      value: "https://github.com/anees-rehman1/my-website"
