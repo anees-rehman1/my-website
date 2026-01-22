@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Awesome Website</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav class="navbar">
+                <div class="logo">
+                    <i class="fas fa-rocket"></i>
+                    <span>MyApp</span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <section id="home" class="hero">
+                <div class="hero-content">
+                    <h1>Welcome to My CI/CD Website!</h1>
+                    <p>This website is automatically deployed using GitHub Actions and ArgoCD</p>
+                    <div class="tech-stack">
+                        <div class="tech-item">
+                            <i class="fab fa-github"></i>
+                            <span>GitHub Actions</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-ship"></i>
+                            <span>Docker</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fab fa-kubernetes"></i>
+                            <span>Kubernetes</span>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-arrows-spin"></i>
+                            <span>ArgoCD</span>
+                        </div>
+                    </div>
+                    <button id="counter-btn" class="cta-button">
+                        Click Me! <span id="counter">0</span>
+                    </button>
+                </div>
+                <div class="hero-image">
+                    <div class="pipeline-animation">
+                        <div class="pipeline-step">
+                            <i class="fas fa-code"></i>
+                            <p>Code</p>
+                        </div>
+                        <div class="arrow">→</div>
+                        <div class="pipeline-step">
+                            <i class="fas fa-cogs"></i>
+                            <p>Build</p>
+                        </div>
+                        <div class="arrow">→</div>
+                        <div class="pipeline-step">
+                            <i class="fas fa-box"></i>
+                            <p>Package</p>
+                        </div>
+                        <div class="arrow">→</div>
+                        <div class="pipeline-step">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Deploy</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="about" class="info-section">
+                <h2>How This Works</h2>
+                <div class="info-cards">
+                    <div class="card">
+                        <div class="card-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <h3>1. Write Code</h3>
+                        <p>I write HTML, CSS, and JavaScript code and push it to GitHub</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h3>2. GitHub Actions</h3>
+                        <p>Automatically builds Docker image and pushes to registry</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <h3>3. ArgoCD Sync</h3>
+                        <p>ArgoCD detects changes and deploys to Kubernetes</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3>4. Live Website</h3>
+                        <p>Website is automatically updated and running in production!</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="deployment-status">
+                <h2>Deployment Status</h2>
+                <div class="status-container">
+                    <div class="status-item active">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Code Committed</span>
+                    </div>
+                    <div class="status-item active">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Docker Built</span>
+                    </div>
+                    <div class="status-item active">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Image Pushed</span>
+                    </div>
+                    <div class="status-item pending">
+                        <i class="fas fa-sync-alt fa-spin"></i>
+                        <span>Deploying...</span>
+                    </div>
+                </div>
+                <p class="last-deployed">Last deployed: <span id="current-time">Loading...</span></p>
+            </section>
+        </main>
+
+        <footer>
+            <p>Made with ❤️ using CI/CD Pipeline | Version: <span id="version">1.0.0</span></p>
+            <p class="footer-links">
+                <a href="#"><i class="fab fa-github"></i> GitHub</a> |
+                <a href="#"><i class="fas fa-book"></i> Documentation</a> |
+                <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
