@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
         - name: my-website
-          image: shadow1234090/my-website:commit-4172b52
+          image: shadow1234090/my-website:commit-8ad9440
           ports:
             - containerPort: 80
           resources:
