@@ -34,8 +34,12 @@ spec:
     spec:
       containers:
         - name: my-website
+<<<<<<< HEAD
           image: shadow1234090/my-website:latest  # Will be updated by GitHub Actions
           imagePullPolicy: Always
+=======
+          image: shadow1234090/my-website:commit-1ea192a
+>>>>>>> de3e55e5bc69cd30c010567f4426c41a21c07cb8
           ports:
             - containerPort: 80
           resources:
